@@ -37,7 +37,7 @@ const config = {
 async function uploadSessionToGitHub(sessionId) {
     const release = await lock.acquire();
     try {
-        const sessionDir = path.resolve(`./temp/${sessionId}`);
+        const sessionDir = path.join('/tmp', sessionId);
         if (!fs.existsSync(sessionDir)) throw new Error("Session directory not found.");
 
         // Read all files in the session directory
@@ -77,7 +77,7 @@ async function uploadSessionToGitHub(sessionId) {
             uploadedFiles.push(file);
         }
 
-        return sessionFolderName; // Return the folder name containing all session files
+        return sessionFolderName;
     } catch (error) {
         throw error;
     } finally {
@@ -96,7 +96,13 @@ router.get('/', async (req, res) => {
     let responseSent = false;
 
     async function generateQRCode() {
-        const sessionDir = `./temp/${id}`;
+        const sessionDir = path.join('/tmp', id);
+        
+        // Ensure directory exists
+        if (!fs.existsSync('/tmp')) {
+            fs.mkdirSync('/tmp', { recursive: true });
+        }
+        
         if (!fs.existsSync(sessionDir)) {
             fs.mkdirSync(sessionDir, { recursive: true });
         }
