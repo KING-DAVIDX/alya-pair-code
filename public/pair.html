@@ -409,8 +409,8 @@
         submitButton.innerHTML = '<i class="fas fa-spinner fa-spin"></i>';
 
         try {
-            // Make actual API call to the /code endpoint
-            const response = await fetch(`/code?number=${number}`);
+            // Updated to use the correct endpoint
+            const response = await fetch(`/api/code?number=${number}`);
             
             if (!response.ok) {
                 throw new Error('Network response was not ok');
@@ -452,6 +452,6 @@
     numberInput.addEventListener('blur', () => {
         numberInput.style.boxShadow = "inset 0 2px 5px rgba(0, 0, 0, 0.1)";
     });
-</script>
+  </script>
 </body>
 </html>
