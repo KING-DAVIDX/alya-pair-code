@@ -1,0 +1,457 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Queen Alya Pair Code</title>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
+  <style>
+    :root {
+      --primary-color: #ff3e3e;
+      --secondary-color: #3ecfff;
+      --accent-color: #32cd32;
+      --dark-bg: rgba(0, 0, 0, 0.85);
+      --light-text: #ffffff;
+      --input-bg: #f0f0f0;
+      --card-shadow: 0 10px 25px rgba(0, 0, 0, 0.5);
+      --btn-gradient: linear-gradient(135deg, var(--primary-color), #ff8f00);
+      --highlight-glow: 0 0 15px rgba(255, 62, 62, 0.7);
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    }
+
+    body {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      min-height: 100vh;
+      margin: 0;
+      background: url('https://files.catbox.moe/v0qkb0.jpg') no-repeat center center/cover;
+      background-attachment: fixed;
+      position: relative;
+    }
+
+    body::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: linear-gradient(45deg, rgba(0, 0, 0, 0.7), rgba(0, 0, 0, 0.4));
+      z-index: 0;
+    }
+
+    .container {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      z-index: 1;
+      width: 100%;
+      max-width: 450px;
+      padding: 1.5rem;
+    }
+
+    .box {
+      width: 100%;
+      padding: 2rem;
+      position: relative;
+      text-align: center;
+      background: var(--dark-bg);
+      border-radius: 20px;
+      box-shadow: var(--card-shadow);
+      overflow: hidden;
+      transition: all 0.3s ease;
+      border: 1px solid rgba(255, 255, 255, 0.1);
+    }
+
+    .box::before {
+      content: '';
+      position: absolute;
+      top: -50%;
+      left: -50%;
+      width: 200%;
+      height: 200%;
+      background: linear-gradient(
+        to bottom right,
+        transparent,
+        transparent,
+        transparent,
+        rgba(255, 62, 62, 0.1),
+        rgba(255, 62, 62, 0.3),
+        transparent
+      );
+      transform: rotate(30deg);
+      z-index: -1;
+      animation: shimmer 8s infinite linear;
+    }
+
+    @keyframes shimmer {
+      0% {
+        transform: translateX(-50%) rotate(30deg);
+      }
+      100% {
+        transform: translateX(50%) rotate(30deg);
+      }
+    }
+
+    .logo {
+      font-size: 2.5rem;
+      margin-bottom: 1rem;
+      color: var(--primary-color);
+      text-shadow: 0 0 10px rgba(255, 62, 62, 0.5);
+    }
+
+    .crown {
+      display: inline-block;
+      animation: float 3s ease-in-out infinite;
+      color: gold;
+      text-shadow: 0 0 10px rgba(255, 215, 0, 0.6);
+    }
+
+    @keyframes float {
+      0%, 100% { transform: translateY(0); }
+      50% { transform: translateY(-10px); }
+    }
+
+    .title {
+      color: var(--light-text);
+      font-size: 1.8rem;
+      font-weight: 700;
+      margin-bottom: 0.5rem;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      text-shadow: 0 0 10px rgba(255, 255, 255, 0.3);
+    }
+
+    .subtitle {
+      color: var(--light-text);
+      opacity: 0.8;
+      margin-bottom: 0.7rem;
+      font-size: 0.9rem;
+    }
+
+    .instruction {
+      color: var(--secondary-color);
+      margin-bottom: 1.5rem;
+      font-size: 1rem;
+      font-weight: 500;
+    }
+
+    .input-container {
+      display: flex;
+      background: rgba(255, 255, 255, 0.1);
+      border-radius: 15px;
+      padding: 0.5rem;
+      gap: 0.5rem;
+      max-width: 100%;
+      width: 100%;
+      margin-bottom: 1rem;
+      box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
+      position: relative;
+      overflow: hidden;
+    }
+
+    .input-container::after {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: linear-gradient(45deg, transparent, rgba(255, 255, 255, 0.05), transparent);
+      pointer-events: none;
+    }
+
+    .input-container input {
+      flex: 1;
+      border-radius: 10px;
+      background: var(--input-bg);
+      padding: 1rem 1.2rem;
+      border: none;
+      color: #000000;
+      transition: all 0.3s ease;
+      font-size: 1rem;
+      box-shadow: inset 0 2px 5px rgba(0, 0, 0, 0.1);
+    }
+
+    .input-container input:focus {
+      outline: none;
+      box-shadow: 0 0 0 2px var(--primary-color);
+    }
+
+    .input-container input::placeholder {
+      color: #888888;
+    }
+
+    .input-container button {
+      padding: 0 1.5rem;
+      background: var(--btn-gradient);
+      font-weight: 600;
+      letter-spacing: 1px;
+      text-transform: uppercase;
+      color: white;
+      border: none;
+      border-radius: 10px;
+      transition: all 0.3s ease;
+      cursor: pointer;
+      box-shadow: 0 5px 15px rgba(255, 62, 62, 0.4);
+      position: relative;
+      overflow: hidden;
+    }
+
+    .input-container button:hover {
+      transform: translateY(-2px);
+      box-shadow: var(--highlight-glow);
+    }
+
+    .input-container button:active {
+      transform: translateY(1px);
+    }
+
+    .input-container button::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: -100%;
+      width: 100%;
+      height: 100%;
+      background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+      transition: 0.5s;
+    }
+
+    .input-container button:hover::before {
+      left: 100%;
+    }
+
+    .waiting-message {
+      color: var(--secondary-color);
+      font-weight: 500;
+      margin: 1rem 0;
+      display: none;
+    }
+
+    #pair {
+      margin-top: 1rem;
+      min-height: 50px;
+    }
+
+    .code-display {
+      display: inline-block;
+      background: rgba(0, 0, 0, 0.5);
+      padding: 1rem 2rem;
+      border-radius: 10px;
+      font-size: 1.4rem;
+      font-weight: bold;
+      color: white;
+      margin: 1rem 0;
+      cursor: pointer;
+      position: relative;
+      overflow: hidden;
+      transition: all 0.3s ease;
+      box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
+      border: 1px solid rgba(255, 62, 62, 0.3);
+    }
+
+    .code-display:hover {
+      transform: translateY(-3px);
+      box-shadow: var(--highlight-glow);
+    }
+
+    .code-value {
+      color: var(--light-text);
+      text-shadow: 0 0 5px rgba(255, 255, 255, 0.5);
+      font-family: 'Courier New', monospace;
+      letter-spacing: 1px;
+    }
+
+    .error-message {
+      color: var(--primary-color);
+      font-weight: bold;
+      margin: 1rem 0;
+      animation: shake 0.5s ease-in-out;
+    }
+
+    @keyframes shake {
+      0%, 100% { transform: translateX(0); }
+      20%, 60% { transform: translateX(-5px); }
+      40%, 80% { transform: translateX(5px); }
+    }
+
+    .success-message {
+      color: var(--accent-color);
+      font-weight: bold;
+      margin: 1rem 0;
+    }
+
+    .copied-animation {
+      animation: popIn 0.5s ease;
+    }
+
+    @keyframes popIn {
+      0% { transform: scale(1); }
+      50% { transform: scale(1.2); }
+      100% { transform: scale(1); }
+    }
+
+    /* Responsive styles */
+    @media (max-width: 600px) {
+      .container {
+        padding: 1rem;
+      }
+      
+      .box {
+        padding: 1.5rem;
+      }
+
+      .title {
+        font-size: 1.5rem;
+      }
+
+      .input-container {
+        flex-direction: column;
+      }
+
+      .input-container input {
+        width: 100%;
+        padding: 0.8rem;
+        border-radius: 10px;
+      }
+
+      .input-container button {
+        width: 100%;
+        padding: 0.8rem;
+        border-radius: 10px;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="box">
+      <div class="logo">
+        <i class="fas fa-user-circle"></i>
+      </div>
+      <h1 class="title">Queen Alya Pair Code <span class="crown">👑</span></h1>
+      <p class="subtitle">Made By X-KING.</p>
+      <p class="instruction">Enter Your Number with Country Code</p>
+      
+      <div class="input-container">
+        <input placeholder="Enter number (e.g. 23481008xxxx)" type="tel" id="number">
+        <button id="submit">
+          Submit
+        </button>
+      </div>
+      
+      <p id="waiting-message" class="waiting-message">Please wait a moment...</p>
+      <div id="pair"></div>
+    </div>
+  </div>
+
+  <script>
+    let pairContainer = document.getElementById("pair");
+    let submitButton = document.getElementById("submit");
+    let numberInput = document.getElementById("number");
+    let waitingMessage = document.getElementById("waiting-message");
+
+    async function Copy() {
+        let obj = document.getElementById("copy");
+        let text = obj.getAttribute('data-code');
+        await navigator.clipboard.writeText(text);
+        
+        // Visual feedback animation
+        obj.classList.add('copied-animation');
+        obj.innerHTML = "COPIED!";
+        obj.style.background = "rgba(50, 205, 50, 0.3)"; // Light green background
+        obj.style.borderColor = "rgba(50, 205, 50, 0.7)";
+        
+        setTimeout(() => {
+            obj.classList.remove('copied-animation');
+            obj.innerHTML = `CODE: <span class="code-value">${text}</span>`;
+            obj.style.background = "rgba(0, 0, 0, 0.5)";
+            obj.style.borderColor = "rgba(255, 62, 62, 0.3)";
+        }, 1000);
+    }
+
+    submitButton.addEventListener("click", async (e) => {
+        e.preventDefault();
+        if (!numberInput.value) {
+            pairContainer.innerHTML = '<p class="error-message"><i class="fas fa-exclamation-circle"></i> Enter your WhatsApp number with Country Code</p>';
+            numberInput.focus();
+            return;
+        }
+
+        let number = numberInput.value.replace(/[^0-9]/g, "");
+        if (number.length < 11) {
+            pairContainer.innerHTML = '<p class="error-message"><i class="fas fa-exclamation-triangle"></i> Invalid Number</p>';
+            numberInput.focus();
+            return;
+        }
+
+        // Format the number nicely
+        numberInput.value = `+${number}`;
+        numberInput.style = "color: #000; font-weight: 500; font-size: 1rem;";
+        
+        // Show waiting message
+        waitingMessage.style.display = "block";
+        pairContainer.innerHTML = '';
+        
+        // Disable button during operation
+        submitButton.disabled = true;
+        submitButton.style.cursor = "not-allowed";
+        submitButton.innerHTML = '<i class="fas fa-spinner fa-spin"></i>';
+
+        try {
+            // Make actual API call to the /code endpoint
+            const response = await fetch(`/code?number=${number}`);
+            
+            if (!response.ok) {
+                throw new Error('Network response was not ok');
+            }
+            
+            const data = await response.json();
+            
+            if (data.code) {
+                waitingMessage.style.display = "none";
+                pairContainer.innerHTML = `
+                    <div id="copy" class="code-display" onclick="Copy()" data-code="${data.code}">
+                        CODE: <span class="code-value">${data.code}</span>
+                    </div>
+                    <p class="success-message"><i class="fas fa-info-circle"></i> Click to copy the code</p>
+                `;
+            } else if (data.status === false) {
+                throw new Error(data.message || 'Failed to get pairing code');
+            } else {
+                throw new Error('Invalid response from server');
+            }
+            
+        } catch (error) {
+            console.error('Error:', error);
+            waitingMessage.style.display = "none";
+            pairContainer.innerHTML = `<p class="error-message"><i class="fas fa-times-circle"></i> ${error.message || 'Error fetching code'}</p>`;
+        } finally {
+            // Re-enable button
+            submitButton.disabled = false;
+            submitButton.style.cursor = "pointer";
+            submitButton.innerHTML = 'Submit';
+        }
+    });
+
+    // Add some interaction to the input field
+    numberInput.addEventListener('focus', () => {
+        numberInput.style.boxShadow = "0 0 0 2px var(--primary-color)";
+    });
+    
+    numberInput.addEventListener('blur', () => {
+        numberInput.style.boxShadow = "inset 0 2px 5px rgba(0, 0, 0, 0.1)";
+    });
+</script>
+</body>
+</html>
