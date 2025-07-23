@@ -1,36 +1,46 @@
 const express = require('express');
-const bodyParser = require("body-parser");
+const bodyParser = require('body-parser');
+const path = require('path');
 const app = express();
 const PORT = process.env.PORT || 8000;
 
-__path = process.cwd();
+// Use __dirname instead of process.cwd() for more reliable path resolution
+const __path = path.join(__dirname, 'public');
 
-let server = require('./qr');
-let code = require('./pair');
+// Import routes
+const qrRouter = require('./qr');
+const codeRouter = require('./pair');
 
+// Increase event listeners if needed
 require('events').EventEmitter.defaultMaxListeners = 500;
 
-// Fix for express-rate-limit issue
-app.set('trust proxy', 1); 
-
-// Move bodyParser before routes
+// Middleware
+app.set('trust proxy', 1);
 app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: true }));
 
-// Define routes after middleware
-app.use('/qr', server);
-app.use('/code', code);
+// Serve static files from public directory
+app.use(express.static(__path));
 
-// Ensure only one response per request
-app.use('/pair', (req, res) => {
-    if (!res.headersSent) res.sendFile(__path + '/public/pair.html');
+// API routes
+app.use('/api/qr', qrRouter);
+app.use('/api/code', codeRouter);
+
+// HTML routes
+app.get('/pair', (req, res) => {
+    res.sendFile(path.join(__path, 'pair.html'));
 });
 
-app.use('/', (req, res) => {
-    if (!res.headersSent) res.sendFile(__path + '/public/index.html');
+app.get('/', (req, res) => {
+    res.sendFile(path.join(__path, 'index.html'));
 });
 
-app.listen(PORT, () => {
-    console.log(`Server running on http://localhost:${PORT}`);
-});
-module.exports = app;
+// Vercel requires module.exports for serverless functions
+if (process.env.VERCEL) {
+    module.exports = app;
+} else {
+    // Local development
+    app.listen(PORT, () => {
+        console.log(`Server running on http://localhost:${PORT}`);
+    });
+}
