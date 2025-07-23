@@ -1,0 +1,824 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Queen Alya | Dashboard</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@400;500;700&family=Rajdhani:wght@300;400;500;600;700&display=swap');
+
+        :root {
+            --primary: #00ffff;
+            --primary-glow: rgba(0, 255, 255, 0.3);
+            --secondary: #1e90ff;
+            --accent: #ff3e3e;
+            --dark-bg: rgba(0, 0, 0, 0.8);
+            --card-bg: rgba(15, 21, 36, 0.85);
+            --text: #ffffff;
+            --text-secondary: #aac8ff;
+            --border-radius: 12px;
+            --transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Rajdhani', sans-serif;
+            background: url('https://files.catbox.moe/v0qkb0.jpg') center/cover no-repeat fixed;
+            color: var(--text);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: flex-start;
+            min-height: 100vh;
+            padding: 20px;
+            position: relative;
+            overflow-x: hidden;
+        }
+
+        body::before {
+            content: '';
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(135deg, rgba(0, 15, 40, 0.8), rgba(0, 5, 20, 0.6));
+            z-index: -1;
+        }
+
+        h1, h2, h3 {
+            font-family: 'Orbitron', sans-serif;
+        }
+
+        /* Header Section */
+        .page-header {
+            text-align: center;
+            margin: 20px 0 40px;
+            position: relative;
+            width: 100%;
+        }
+
+        .main-title {
+            font-size: 2.8rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            margin-bottom: 10px;
+            text-shadow: 0 0 15px var(--primary-glow), 
+                         0 0 30px var(--primary-glow);
+            background: linear-gradient(to right, var(--primary), var(--secondary));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            position: relative;
+            display: inline-block;
+        }
+
+        .main-title::after {
+            content: '';
+            position: absolute;
+            bottom: -8px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 60%;
+            height: 3px;
+            background: linear-gradient(to right, var(--primary), var(--secondary));
+            border-radius: 3px;
+        }
+
+        /* Menu Button */
+        .menu-btn {
+            position: fixed;
+            top: 20px;
+            left: 20px;
+            background: rgba(30, 144, 255, 0.15);
+            border: 1px solid var(--secondary);
+            padding: 10px 20px;
+            font-size: 1rem;
+            color: var(--text);
+            cursor: pointer;
+            border-radius: var(--border-radius);
+            transition: var(--transition);
+            z-index: 1000;
+            backdrop-filter: blur(10px);
+            box-shadow: 0 0 20px rgba(30, 144, 255, 0.3);
+            font-family: 'Orbitron', sans-serif;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .menu-btn i {
+            font-size: 1.2rem;
+            color: var(--primary);
+        }
+
+        .menu-btn:hover {
+            background: rgba(30, 144, 255, 0.3);
+            transform: translateY(-2px);
+            box-shadow: 0 5px 20px rgba(30, 144, 255, 0.5);
+        }
+
+        /* Side Menu */
+        .side-menu {
+            position: fixed;
+            top: 0;
+            right: -300px;
+            width: 280px;
+            height: 100%;
+            background: var(--dark-bg);
+            backdrop-filter: blur(15px);
+            padding: 80px 25px 30px;
+            box-shadow: -5px 0 20px rgba(0, 0, 0, 0.5);
+            transition: right 0.4s cubic-bezier(0.17, 0.67, 0.21, 1.03);
+            border-left: 1px solid rgba(30, 144, 255, 0.3);
+            z-index: 900;
+            overflow-y: auto;
+        }
+
+        .side-menu.active {
+            right: 0;
+        }
+
+        .side-menu-header {
+            text-align: center;
+            margin-bottom: 30px;
+            padding-bottom: 15px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .side-menu-header h3 {
+            color: var(--primary);
+            font-size: 1.5rem;
+            margin-bottom: 5px;
+        }
+
+        .side-menu-header p {
+            color: var(--text-secondary);
+            font-size: 0.9rem;
+        }
+
+        .side-menu a {
+            display: flex;
+            align-items: center;
+            color: var(--text);
+            font-size: 1rem;
+            margin: 18px 0;
+            padding: 12px 15px;
+            text-decoration: none;
+            border-radius: var(--border-radius);
+            transition: var(--transition);
+            background: rgba(30, 144, 255, 0.05);
+        }
+
+        .side-menu a:hover {
+            background: rgba(30, 144, 255, 0.15);
+            transform: translateX(5px);
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
+        }
+
+        .side-menu a i {
+            margin-right: 12px;
+            font-size: 1.2rem;
+            color: var(--secondary);
+            transition: var(--transition);
+        }
+
+        .side-menu a:hover i {
+            color: var(--primary);
+            transform: scale(1.2);
+        }
+
+        .close-menu {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            background: transparent;
+            border: none;
+            color: var(--text-secondary);
+            font-size: 1.5rem;
+            cursor: pointer;
+            transition: var(--transition);
+        }
+
+        .close-menu:hover {
+            color: var(--primary);
+            transform: rotate(90deg);
+        }
+
+        .pair-buttons {
+            margin-top: 30px;
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 15px;
+        }
+
+        .pair-buttons button {
+            background: rgba(0, 255, 255, 0.1);
+            border: 1px solid var(--primary);
+            color: var(--text);
+            padding: 12px;
+            font-size: 1rem;
+            font-weight: 600;
+            font-family: 'Orbitron', sans-serif;
+            cursor: pointer;
+            border-radius: var(--border-radius);
+            transition: var(--transition);
+            position: relative;
+            overflow: hidden;
+            z-index: 1;
+            letter-spacing: 1px;
+        }
+
+        .pair-buttons button::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 0;
+            height: 100%;
+            background: linear-gradient(to right, var(--primary-glow), rgba(30, 144, 255, 0.3));
+            transition: all 0.5s;
+            z-index: -1;
+        }
+
+        .pair-buttons button:hover {
+            color: #fff;
+            border-color: var(--secondary);
+            box-shadow: 0 0 15px var(--primary-glow);
+        }
+
+        .pair-buttons button:hover::before {
+            width: 100%;
+        }
+
+        /* Dashboard */
+        .dashboard {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 25px;
+            width: 100%;
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        .dashboard-section {
+            width: 100%;
+            max-width: 1200px;
+        }
+
+        .section-title {
+            font-size: 1.5rem;
+            margin-bottom: 20px;
+            color: var(--text-secondary);
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .section-title i {
+            color: var(--primary);
+        }
+
+        .card {
+            background: var(--card-bg);
+            padding: 25px;
+            border-radius: var(--border-radius);
+            position: relative;
+            transition: var(--transition);
+            overflow: hidden;
+            height: 100%;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            text-align: center;
+            border: 1px solid rgba(0, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+        }
+
+        .card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 3px;
+            background: linear-gradient(90deg, var(--primary), var(--secondary));
+        }
+
+        .card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 30px rgba(0, 255, 255, 0.1);
+            border-color: rgba(0, 255, 255, 0.3);
+        }
+
+        .card:hover .icon,
+        .card:hover h2 {
+            color: var(--primary);
+        }
+
+        .profile-card {
+            padding-top: 50px;
+        }
+
+        .profile-img-container {
+            position: relative;
+            width: 100px;
+            height: 100px;
+            margin-bottom: 20px;
+        }
+
+        .profile-img {
+            width: 100px;
+            height: 100px;
+            border-radius: 50%;
+            object-fit: cover;
+            border: 2px solid var(--primary);
+            transition: var(--transition);
+        }
+
+        .profile-card:hover .profile-img {
+            transform: scale(1.05);
+            box-shadow: 0 0 25px var(--primary-glow);
+        }
+
+        .profile-img-circle {
+            position: absolute;
+            top: -5px;
+            left: -5px;
+            width: 110px;
+            height: 110px;
+            border-radius: 50%;
+            border: 1px dashed var(--primary);
+            animation: rotate 10s linear infinite;
+        }
+
+        @keyframes rotate {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .card h2 {
+            font-size: 1.5rem;
+            color: var(--text);
+            margin: 10px 0;
+            transition: var(--transition);
+        }
+
+        .card h3 {
+            font-size: 1.2rem;
+            color: var(--text-secondary);
+            margin-bottom: 5px;
+        }
+
+        .card p {
+            font-size: 1rem;
+            margin: 5px 0;
+            color: var(--text-secondary);
+        }
+
+        .stat-value {
+            font-size: 2.5rem;
+            font-weight: 700;
+            background: linear-gradient(to right, var(--primary), var(--secondary));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            margin: 10px 0;
+            transition: var(--transition);
+        }
+
+        .card:hover .stat-value {
+            text-shadow: 0 0 10px var(--primary-glow);
+        }
+
+        .icon {
+            font-size: 2.5rem;
+            color: var(--secondary);
+            margin-bottom: 15px;
+            transition: var(--transition);
+        }
+
+        .github-link {
+            display: inline-block;
+            margin-top: 15px;
+            padding: 8px 15px;
+            background: rgba(0, 255, 255, 0.1);
+            color: var(--text);
+            text-decoration: none;
+            border-radius: 20px;
+            transition: var(--transition);
+            border: 1px solid rgba(0, 255, 255, 0.2);
+        }
+
+        .github-link:hover {
+            background: rgba(0, 255, 255, 0.2);
+            transform: translateY(-3px);
+        }
+
+        .last-updated {
+            text-align: center;
+            margin-top: 40px;
+            color: var(--text-secondary);
+            font-size: 0.9rem;
+            opacity: 0.7;
+        }
+
+        /* Particles */
+        .particles {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: -1;
+        }
+
+        /* Footer */
+        .footer {
+            margin-top: 60px;
+            text-align: center;
+            padding: 20px;
+            width: 100%;
+            border-top: 1px solid rgba(255, 255, 255, 0.05);
+        }
+
+        .footer p {
+            color: var(--text-secondary);
+            font-size: 0.9rem;
+        }
+
+        .footer a {
+            color: var(--primary);
+            text-decoration: none;
+            transition: var(--transition);
+        }
+
+        .footer a:hover {
+            text-decoration: underline;
+        }
+
+        /* Loading animation */
+        .loading {
+            display: inline-block;
+            width: 30px;
+            height: 30px;
+            border: 3px solid rgba(255, 255, 255, 0.3);
+            border-radius: 50%;
+            border-top-color: var(--primary);
+            animation: spin 1s ease-in-out infinite;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            .dashboard {
+                grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+                gap: 20px;
+            }
+
+            .main-title {
+                font-size: 2rem;
+            }
+
+            .card {
+                padding: 20px;
+            }
+
+            .stat-value {
+                font-size: 2rem;
+            }
+
+            .profile-img, .profile-img-container {
+                width: 80px;
+                height: 80px;
+            }
+
+            .profile-img-circle {
+                width: 90px;
+                height: 90px;
+            }
+
+            .menu-btn {
+                padding: 8px 16px;
+                font-size: 0.9rem;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .dashboard {
+                grid-template-columns: 1fr;
+            }
+
+            .main-title {
+                font-size: 1.8rem;
+            }
+
+            .menu-btn span {
+                display: none;
+            }
+
+            .menu-btn {
+                padding: 12px;
+            }
+
+            .menu-btn i {
+                margin: 0;
+            }
+
+            .page-header {
+                margin: 10px 0 30px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Particle Background -->
+    <div class="particles" id="particles-js"></div>
+
+    <!-- Menu Button -->
+    <button class="menu-btn" onclick="toggleMenu()">
+        <i class="fas fa-bars"></i>
+        <span>Menu</span>
+    </button>
+
+    <!-- Side Menu -->
+    <div class="side-menu">
+        <button class="close-menu" onclick="toggleMenu()">
+            <i class="fas fa-times"></i>
+        </button>
+
+        <div class="side-menu-header">
+            <h3>Queen_Alya</h3>
+            <p>Navigation Menu</p>
+        </div>
+
+        <a href="https://github.com/KING-DAVIDX" target="_blank">
+            <i class="fab fa-github"></i>
+            GitHub Profile
+        </a>
+        <a href="https://github.com/KING-DAVIDX/Queen_Alya" target="_blank">
+            <i class="fas fa-robot"></i>
+            Bot Repository
+        </a>
+        <a href="https://whatsapp.com/channel/0029VaeW5Tw4yltQOYIO5E2D" target="_blank">
+            <i class="fab fa-whatsapp"></i>
+            WhatsApp Channel
+        </a>
+        <a href="https://chat.whatsapp.com/LvBKmmOfPMAFsF98XGihjw" target="_blank">
+            <i class="fas fa-users"></i>
+            WhatsApp Group
+        </a>
+        
+        <div class="pair-buttons">
+            <button onclick="window.open('/pair')">
+                <i class="fas fa-link"></i> Pair
+            </button>
+            <button onclick="window.open('/qr')">
+                <i class="fas fa-qrcode"></i> QR
+            </button>
+        </div>
+    </div>
+
+    <!-- Header -->
+    <div class="page-header">
+        <h1 class="main-title">Queen_Alya Dashboard</h1>
+    </div>
+
+    <!-- Main Dashboard -->
+    <div class="dashboard-section">
+        <h2 class="section-title"><i class="fas fa-chart-line"></i> GitHub Stats</h2>
+
+        <div class="dashboard">
+            <!-- GitHub Profile Card -->
+            <div class="card profile-card">
+                <div class="profile-img-container">
+                    <div class="profile-img-circle"></div>
+                    <img id="profile-pic" class="profile-img" src="https://github.com/KING-DAVIDX.png" alt="GitHub Profile">
+                </div>
+                <h2 id="username">KING-DAVIDX</h2>
+                <p id="bio">Bot Developer</p>
+                <p>Followers: <span id="followers" class="stat-value">-</span></p>
+                <a href="https://github.com/KING-DAVIDX" target="_blank" class="github-link">
+                    <i class="fab fa-github"></i> View Profile
+                </a>
+            </div>
+
+            <!-- Repository Stats -->
+            <div class="card">
+                <i class="icon fas fa-star"></i>
+                <h2>Stars</h2>
+                <p>Repository Rating</p>
+                <div id="stars" class="stat-value">-</div>
+            </div>
+
+            <div class="card">
+                <i class="icon fas fa-eye"></i>
+                <h2>Watchers</h2>
+                <p>Repository Watchers</p>
+                <div id="watchers" class="stat-value">-</div>
+            </div>
+
+            <div class="card">
+                <i class="icon fas fa-code-branch"></i>
+                <h2>Forks</h2>
+                <p>Repository Forks</p>
+                <div id="forks" class="stat-value">-</div>
+            </div>
+        </div>
+
+        <p class="last-updated">Last updated: <span id="update-time">Loading...</span></p>
+    </div>
+
+    <!-- Footer -->
+    <div class="footer">
+        <p>&copy; 2025 Queen_Alya | Developed by <a href="https://github.com/KING-DAVIDX" target="_blank">KING-DAVIDX</a></p>
+    </div>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/particles.js/2.0.0/particles.min.js"></script>
+    <script>
+        function toggleMenu() {
+            document.querySelector('.side-menu').classList.toggle('active');
+        }
+
+        // Format number for display (e.g. 1.2k)
+        function formatNumber(num) {
+            if (num >= 1000) {
+                return (num / 1000).toFixed(1) + 'k';
+            }
+            return num;
+        }
+
+        async function fetchGitHubStats() {
+            try {
+                // Update display to show loading state
+                document.getElementById('stars').innerHTML = '<div class="loading"></div>';
+                document.getElementById('watchers').innerHTML = '<div class="loading"></div>';
+                document.getElementById('forks').innerHTML = '<div class="loading"></div>';
+                document.getElementById('followers').innerHTML = '<div class="loading"></div>';
+
+                // Fetch user data
+                let userResponse = await fetch('https://api.github.com/users/KING-DAVIDX');
+                let userData = await userResponse.json();
+                
+                if (userData.bio) {
+                    document.getElementById('bio').textContent = userData.bio;
+                }
+                
+                document.getElementById('username').textContent = userData.login || 'KING-DAVIDX';
+                document.getElementById('followers').textContent = formatNumber(userData.followers);
+
+                // Fetch repo data
+                let repoResponse = await fetch('https://api.github.com/repos/KING-DAVIDX/Queen_Alya');
+                let repoData = await repoResponse.json();
+                
+                // Update stats with animation
+                animateValue('stars', 0, repoData.stargazers_count, 1500);
+                animateValue('watchers', 0, repoData.watchers_count, 1500);
+                animateValue('forks', 0, repoData.forks_count, 1500);
+
+                // Update last updated time
+                const now = new Date();
+                document.getElementById('update-time').textContent = now.toLocaleString();
+            } catch (error) {
+                console.error('Error fetching GitHub data:', error);
+                document.getElementById('stars').textContent = '?';
+                document.getElementById('watchers').textContent = '?';
+                document.getElementById('forks').textContent = '?';
+                document.getElementById('followers').textContent = '?';
+            }
+        }
+
+        // Function to animate counter
+        function animateValue(id, start, end, duration) {
+            const element = document.getElementById(id);
+            const range = end - start;
+            const startTime = performance.now();
+            
+            function updateValue(timestamp) {
+                const elapsed = timestamp - startTime;
+                const progress = Math.min(elapsed / duration, 1);
+                const value = Math.floor(start + range * progress);
+                element.textContent = formatNumber(value);
+                
+                if (progress < 1) {
+                    window.requestAnimationFrame(updateValue);
+                }
+            }
+            
+            window.requestAnimationFrame(updateValue);
+        }
+
+        // Initialize particle background
+        document.addEventListener('DOMContentLoaded', function() {
+            particlesJS('particles-js', {
+                "particles": {
+                    "number": {
+                        "value": 50,
+                        "density": {
+                            "enable": true,
+                            "value_area": 800
+                        }
+                    },
+                    "color": {
+                        "value": "#00ffff"
+                    },
+                    "shape": {
+                        "type": "circle",
+                        "stroke": {
+                            "width": 0,
+                            "color": "#000000"
+                        },
+                    },
+                    "opacity": {
+                        "value": 0.3,
+                        "random": true,
+                        "anim": {
+                            "enable": true,
+                            "speed": 1,
+                            "opacity_min": 0.1,
+                            "sync": false
+                        }
+                    },
+                    "size": {
+                        "value": 3,
+                        "random": true,
+                        "anim": {
+                            "enable": true,
+                            "speed": 2,
+                            "size_min": 0.1,
+                            "sync": false
+                        }
+                    },
+                    "line_linked": {
+                        "enable": true,
+                        "distance": 150,
+                        "color": "#00ffff",
+                        "opacity": 0.2,
+                        "width": 1
+                    },
+                    "move": {
+                        "enable": true,
+                        "speed": 1,
+                        "direction": "none",
+                        "random": true,
+                        "straight": false,
+                        "out_mode": "out",
+                        "bounce": false,
+                    }
+                },
+                "interactivity": {
+                    "detect_on": "canvas",
+                    "events": {
+                        "onhover": {
+                            "enable": true,
+                            "mode": "grab"
+                        },
+                        "onclick": {
+                            "enable": true,
+                            "mode": "push"
+                        },
+                        "resize": true
+                    },
+                    "modes": {
+                        "grab": {
+                            "distance": 140,
+                            "line_linked": {
+                                "opacity": 0.5
+                            }
+                        },
+                        "push": {
+                            "particles_nb": 3
+                        }
+                    }
+                },
+                "retina_detect": true
+            });
+        });
+
+        // Fetch GitHub stats on page load
+        fetchGitHubStats();
+
+        // Add event listener for menu close on outside click
+        document.addEventListener('click', function(event) {
+            const sideMenu = document.querySelector('.side-menu');
+            const menuBtn = document.querySelector('.menu-btn');
+            
+            if (sideMenu.classList.contains('active') && 
+                !sideMenu.containsb(event.target) && 
+                event.target !== menuBtn) {
+                sideMenu.classList.remove('active');
+            }
+        });
+    </script>
+</body>
+</html>
