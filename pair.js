@@ -68,6 +68,9 @@ router.get('/', async (req, res) => {
     const id = uuidv4();
     let num = req.query.number;
     let responseSent = false;
+    let socket = null;
+    let retryCount = 0;
+    const maxRetries = 3;
 
     // Validate phone number
     if (!num || !num.match(/^[0-9]+$/)) {
@@ -85,44 +88,74 @@ router.get('/', async (req, res) => {
         fs.mkdirSync(sessionDir, { recursive: true });
     }
 
-    try {
-        const { state, saveCreds } = await useMultiFileAuthState(sessionDir);
-        const socket = makeWASocket({
-            auth: {
-                creds: state.creds,
-                keys: makeCacheableSignalKeyStore(state.keys, pino({ level: "fatal" }).child({ level: "fatal" })),
-            },
-            printQRInTerminal: false,
-            logger: pino({ level: "fatal" }).child({ level: "fatal" }),
-            browser: Browsers.macOS("Safari")
-        });
-
-        socket.ev.on('creds.update', saveCreds);
-
-        // Handle pairing code generation
-        if (!socket.authState.creds.registered) {
-            try {
-                const code = await socket.requestPairingCode(num);
-                if (!responseSent) {
-                    res.json({ code });
-                    responseSent = true;
-                }
-            } catch (pairError) {
-                console.error("❌ Pairing Error:", pairError);
-                if (!responseSent) {
-                    res.status(500).json({ status: false, message: "Failed to generate pairing code" });
-                    responseSent = true;
-                }
-                return;
+    const cleanup = async () => {
+        try {
+            if (socket && !socket.ws.closed) {
+                await socket.ws.close();
             }
+            if (fs.existsSync(sessionDir)) {
+                fs.rmSync(sessionDir, { recursive: true, force: true });
+            }
+        } catch (cleanupError) {
+            console.error("Cleanup error:", cleanupError);
         }
+    };
+
+    const generatePairingCode = async () => {
+        try {
+            const { state, saveCreds } = await useMultiFileAuthState(sessionDir);
+            socket = makeWASocket({
+                auth: {
+                    creds: state.creds,
+                    keys: makeCacheableSignalKeyStore(state.keys, pino({ level: "fatal" }).child({ level: "fatal" })),
+                },
+                printQRInTerminal: false,
+                logger: pino({ level: "fatal" }).child({ level: "fatal" }),
+                browser: Browsers.macOS("Safari"),
+                connectTimeoutMs: 30000,
+                keepAliveIntervalMs: 15000
+            });
+
+            socket.ev.on('creds.update', saveCreds);
+
+            // Handle pairing code generation with retry logic
+            if (!socket.authState.creds.registered) {
+                while (retryCount < maxRetries) {
+                    try {
+                        const code = await socket.requestPairingCode(num);
+                        if (!responseSent) {
+                            res.json({ code });
+                            responseSent = true;
+                        }
+                        return true;
+                    } catch (pairError) {
+                        retryCount++;
+                        console.error(`❌ Pairing Error (Attempt ${retryCount}/${maxRetries}):`, pairError);
+                        
+                        if (retryCount < maxRetries) {
+                            await delay(2000); // Wait before retrying
+                        } else {
+                            throw pairError;
+                        }
+                    }
+                }
+            }
+            return false;
+        } catch (error) {
+            throw error;
+        }
+    };
+
+    try {
+        const pairingSuccess = await generatePairingCode();
+        if (!pairingSuccess) return;
 
         socket.ev.on("connection.update", async (update) => {
             const { connection, lastDisconnect } = update;
             
             if (connection === "open") {
                 try {
-                    await delay(3000); // Give some time for the connection to stabilize
+                    await delay(5000); // Give more time for the connection to stabilize
                     
                     const sessionLink = await uploadSessionToMega(id);
                     const sID = config.PREFIX + id;
@@ -148,29 +181,43 @@ router.get('/', async (req, res) => {
                         responseSent = true;
                     }
                 } finally {
-                    await delay(100);
-                    await socket.ws.close();
-                    fs.rmSync(sessionDir, { recursive: true, force: true });
+                    await cleanup();
                 }
             } else if (connection === "close") {
+                const shouldReconnect = lastDisconnect?.error?.output?.statusCode !== 401; // don't reconnect on authentication error
                 if (lastDisconnect?.error) {
                     console.error("❌ Connection closed with error:", lastDisconnect.error);
                 }
+                
                 if (!responseSent) {
-                    res.status(503).json({ status: false, message: "Connection closed before completion" });
-                    responseSent = true;
+                    if (shouldReconnect && retryCount < maxRetries) {
+                        retryCount++;
+                        console.log(`Attempting reconnect (${retryCount}/${maxRetries})`);
+                        await delay(2000);
+                        await generatePairingCode();
+                    } else {
+                        res.status(503).json({ 
+                            status: false, 
+                            message: "Connection closed before completion" 
+                        });
+                        responseSent = true;
+                        await cleanup();
+                    }
                 }
-                fs.rmSync(sessionDir, { recursive: true, force: true });
             }
         });
 
     } catch (err) {
         console.error("❌ Error in generatePairCode:", err);
-        fs.rmSync(sessionDir, { recursive: true, force: true });
         if (!responseSent) {
-            res.status(500).json({ status: false, message: "Internal server error during pairing" });
+            res.status(500).json({ 
+                status: false, 
+                message: "Internal server error during pairing",
+                error: err.message 
+            });
             responseSent = true;
         }
+        await cleanup();
     }
 });
 
