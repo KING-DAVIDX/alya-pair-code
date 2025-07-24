@@ -13,7 +13,6 @@ const {
 const { v4: uuidv4 } = require("uuid");
 const QRCode = require('qrcode');
 const Mega = require('megajs');
-const archiver = require('archiver');
 
 let router = express.Router();
 const lock = new Mutex();
@@ -36,36 +35,27 @@ async function uploadSessionToMega(sessionId) {
         const sessionDir = path.join('/tmp', sessionId);
         if (!fs.existsSync(sessionDir)) throw new Error("Session directory not found.");
 
-        // Create a zip file
-        const zipPath = path.join('/tmp', `${sessionId}.zip`);
-        const output = fs.createWriteStream(zipPath);
-        const archive = archiver('zip', { zlib: { level: 9 } });
+        const storage = await new Mega({
+            email: MEGA_EMAIL,
+            password: MEGA_PASSWORD,
+            autologin: false
+        }).login();
 
-        return new Promise((resolve, reject) => {
-            output.on('close', async () => {
-                try {
-                    const storage = await new Mega({
-                        email: MEGA_EMAIL,
-                        password: MEGA_PASSWORD,
-                        autologin: false
-                    }).login();
+        const folder = await storage.root.mkdir('WhatsApp_Sessions').catch(() => storage.root.children.find(c => c.name === 'WhatsApp_Sessions'));
+        const sessionFolder = await folder.mkdir(`${config.PREFIX}${sessionId}`);
+        
+        // Read all files from session directory
+        const files = fs.readdirSync(sessionDir);
+        
+        // Upload each file to Mega
+        for (const file of files) {
+            const filePath = path.join(sessionDir, file);
+            await sessionFolder.upload(filePath, { name: file });
+        }
 
-                    const folder = await storage.root.mkdir('WhatsApp_Sessions');
-                    const file = await folder.upload(zipPath, { name: `${config.PREFIX}${sessionId}.zip` });
-                    const link = await file.link();
-                    
-                    fs.unlinkSync(zipPath);
-                    resolve(link);
-                } catch (error) {
-                    reject(error);
-                }
-            });
-
-            archive.on('error', (err) => reject(err));
-            archive.pipe(output);
-            archive.directory(sessionDir, false);
-            archive.finalize();
-        });
+        // Get the public link to the folder
+        const link = await sessionFolder.link();
+        return link;
     } catch (error) {
         throw error;
     } finally {
