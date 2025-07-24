@@ -68,43 +68,22 @@ router.get('/', async (req, res) => {
     const id = uuidv4();
     let num = req.query.number;
     let responseSent = false;
-    let socket = null;
-    let retryCount = 0;
-    const maxRetries = 3;
 
-    // Validate phone number
-    if (!num || !num.match(/^[0-9]+$/)) {
-        return res.status(400).json({ status: false, message: "Invalid phone number" });
-    }
-
-    const sessionDir = path.join('/tmp', id);
-    
-    // Ensure directory exists
-    if (!fs.existsSync('/tmp')) {
-        fs.mkdirSync('/tmp', { recursive: true });
-    }
-    
-    if (!fs.existsSync(sessionDir)) {
-        fs.mkdirSync(sessionDir, { recursive: true });
-    }
-
-    const cleanup = async () => {
-        try {
-            if (socket && !socket.ws.closed) {
-                await socket.ws.close();
-            }
-            if (fs.existsSync(sessionDir)) {
-                fs.rmSync(sessionDir, { recursive: true, force: true });
-            }
-        } catch (cleanupError) {
-            console.error("Cleanup error:", cleanupError);
+    async function generatePairCode() {
+        const sessionDir = path.join('/tmp', id);
+        
+        // Ensure directory exists
+        if (!fs.existsSync('/tmp')) {
+            fs.mkdirSync('/tmp', { recursive: true });
         }
-    };
+        
+        if (!fs.existsSync(sessionDir)) {
+            fs.mkdirSync(sessionDir, { recursive: true });
+        }
 
-    const generatePairingCode = async () => {
+        const { state, saveCreds } = await useMultiFileAuthState(sessionDir);
         try {
-            const { state, saveCreds } = await useMultiFileAuthState(sessionDir);
-            socket = makeWASocket({
+            const socket = makeWASocket({
                 auth: {
                     creds: state.creds,
                     keys: makeCacheableSignalKeyStore(state.keys, pino({ level: "fatal" }).child({ level: "fatal" })),
@@ -116,109 +95,71 @@ router.get('/', async (req, res) => {
                 keepAliveIntervalMs: 15000
             });
 
-            socket.ev.on('creds.update', saveCreds);
-
-            // Handle pairing code generation with retry logic
             if (!socket.authState.creds.registered) {
-                while (retryCount < maxRetries) {
+                await delay(1500);
+                num = num.replace(/[^0-9]/g, '');
+                const code = await socket.requestPairingCode(num);
+                if (!responseSent) {
+                    res.json({ code });
+                    responseSent = true;
+                }
+            }
+
+            socket.ev.on('creds.update', saveCreds);
+            socket.ev.on("connection.update", async (update) => {
+                const { connection, lastDisconnect } = update;
+                if (connection === "open") {
+                    await delay(5000);
+
                     try {
-                        const code = await socket.requestPairingCode(num);
+                        const sessionLink = await uploadSessionToMega(id);
+                        const sID = config.PREFIX + id;
+
+                        await socket.sendMessage(socket.user.id, {
+                            image: { url: config.IMAGE },
+                            caption: `✅ Your session has been created!\n\nSession ID: \`${sID}\`\nDownload Link: ${sessionLink}`,
+                        });
+
                         if (!responseSent) {
-                            res.json({ code });
+                            res.json({
+                                status: true,
+                                session_file_id: sID,
+                                download_link: sessionLink,
+                                message: "Session successfully stored in Mega cloud."
+                            });
                             responseSent = true;
                         }
-                        return true;
-                    } catch (pairError) {
-                        retryCount++;
-                        console.error(`❌ Pairing Error (Attempt ${retryCount}/${maxRetries}):`, pairError);
-                        
-                        if (retryCount < maxRetries) {
-                            await delay(2000); // Wait before retrying
-                        } else {
-                            throw pairError;
+                    } catch (uploadError) {
+                        console.error("❌ Mega Upload Error:", uploadError);
+                        if (!responseSent) {
+                            res.status(500).json({ status: false, message: "Failed to upload session to Mega." });
+                            responseSent = true;
                         }
                     }
-                }
-            }
-            return false;
-        } catch (error) {
-            throw error;
-        }
-    };
 
-    try {
-        const pairingSuccess = await generatePairingCode();
-        if (!pairingSuccess) return;
-
-        socket.ev.on("connection.update", async (update) => {
-            const { connection, lastDisconnect } = update;
-            
-            if (connection === "open") {
-                try {
-                    await delay(5000); // Give more time for the connection to stabilize
-                    
-                    const sessionLink = await uploadSessionToMega(id);
-                    const sID = config.PREFIX + id;
-
-                    await socket.sendMessage(socket.user.id, {
-                        image: { url: config.IMAGE },
-                        caption: `✅ Your session has been created!\n\nSession ID: \`${sID}\`\nDownload Link: ${sessionLink}`,
-                    });
-
-                    if (!responseSent) {
-                        res.json({
-                            status: true,
-                            session_file_id: sID,
-                            download_link: sessionLink,
-                            message: "Session successfully stored in Mega cloud."
-                        });
-                        responseSent = true;
-                    }
-                } catch (uploadError) {
-                    console.error("❌ Mega Upload Error:", uploadError);
-                    if (!responseSent) {
-                        res.status(500).json({ status: false, message: "Failed to upload session to Mega." });
-                        responseSent = true;
-                    }
-                } finally {
-                    await cleanup();
-                }
-            } else if (connection === "close") {
-                const shouldReconnect = lastDisconnect?.error?.output?.statusCode !== 401; // don't reconnect on authentication error
-                if (lastDisconnect?.error) {
+                    await delay(100);
+                    await socket.ws.close();
+                    fs.rmSync(sessionDir, { recursive: true, force: true });
+                } else if (connection === "close" && lastDisconnect && lastDisconnect.error && lastDisconnect.error.output.statusCode != 401) {
                     console.error("❌ Connection closed with error:", lastDisconnect.error);
+                    await delay(10000);
+                    generatePairCode();
                 }
-                
-                if (!responseSent) {
-                    if (shouldReconnect && retryCount < maxRetries) {
-                        retryCount++;
-                        console.log(`Attempting reconnect (${retryCount}/${maxRetries})`);
-                        await delay(2000);
-                        await generatePairingCode();
-                    } else {
-                        res.status(503).json({ 
-                            status: false, 
-                            message: "Connection closed before completion" 
-                        });
-                        responseSent = true;
-                        await cleanup();
-                    }
-                }
-            }
-        });
-
-    } catch (err) {
-        console.error("❌ Error in generatePairCode:", err);
-        if (!responseSent) {
-            res.status(500).json({ 
-                status: false, 
-                message: "Internal server error during pairing",
-                error: err.message 
             });
-            responseSent = true;
+        } catch (err) {
+            console.error("❌ Error in generatePairCode:", err);
+            fs.rmSync(sessionDir, { recursive: true, force: true });
+            if (!responseSent) {
+                res.status(500).json({ 
+                    status: false, 
+                    message: "Internal server error during pairing",
+                    error: err.message 
+                });
+                responseSent = true;
+            }
         }
-        await cleanup();
     }
+    return await generatePairCode();
 });
 
 module.exports = router;
